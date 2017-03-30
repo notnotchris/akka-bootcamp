@@ -10,30 +10,44 @@ namespace WinTail
     class ConsoleReaderActor : UntypedActor
     {
         public const string ExitCommand = "exit";
-        private IActorRef _consoleWriterActor;
+        public const string StartCommand = "start";
 
-        public ConsoleReaderActor(IActorRef consoleWriterActor)
+        private IActorRef _validationActor;
+
+        public ConsoleReaderActor(IActorRef validationActor)
         {
-            _consoleWriterActor = consoleWriterActor;
+            _validationActor = validationActor;
         }
 
         protected override void OnReceive(object message)
         {
-            var read = Console.ReadLine();
-            if (!string.IsNullOrEmpty(read) && String.Equals(read, ExitCommand, StringComparison.OrdinalIgnoreCase))
+            if (message.Equals(StartCommand))
+                DoPrintInstructions();
+
+            GetAndValidateInput();
+        }
+
+        private void DoPrintInstructions()
+        {
+            Console.WriteLine("Please provide the URI of a log file on disk.\n");
+        }
+
+        /// <summary>
+        /// Reads input from console, validates it, then signals appropriate response
+        /// (continue processing, error, success etc.).
+        /// </summary>
+        private void GetAndValidateInput()
+        {
+            var message = Console.ReadLine();
+
+            if (!string.IsNullOrEmpty(message) && string.Equals(message, ExitCommand, StringComparison.OrdinalIgnoreCase))
             {
-                // shut down the system (acquire handle to system via
-                // this actors context)
                 Context.System.Terminate();
                 return;
             }
 
-            // send input to the console writer to process and print
-            // YOU NEED TO FILL IN HERE
-
-            // continue reading messages from the console
-            // YOU NEED TO FILL IN HERE
+            _validationActor.Tell(message);
+            
         }
-
     }
 }
